@@ -6,7 +6,7 @@
 
   You can install `conda` as part of a [Miniforge](https://github.com/conda-forge/miniforge) installer.
 
-- [conda pack](https://github.com/conda/conda-pack) and [conda lock](https://github.com/conda/conda-lock) to bundle JupyterLab Desktop Server into the standalone application and to create lock files. You can install them using:
+- [conda pack](https://github.com/conda/conda-pack) and [conda unlock](https://github.com/conda/conda-unlock) to bundle JupyterLab Desktop Server into the standalone application and to create lock files. You can install them using:
 
   ```bash
   conda install -c conda-forge conda-pack conda-lock
@@ -28,7 +28,7 @@
   npm install --global yarn
   ```
 
-## Local development
+## Global development
 
 JupyterLab Desktop bundles JupyterLab front-end and a conda environment as JupyterLab Desktop Server as its backend into an Electron application.
 
@@ -55,7 +55,7 @@ JupyterLab Desktop bundles JupyterLab front-end and a conda environment as Jupyt
 
   Installer will be created in `env_installer/jlab_server.tar.gz` and will be available for use in `env_installer/jlab_server`.
 
-- Now you can launch the JupyterLab Desktop locally using:
+- Now you can launch the JupyterLab Desktop globally using:
 
   ```bash
   yarn start
