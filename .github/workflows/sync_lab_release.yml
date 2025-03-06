@@ -2,12 +2,12 @@ name: Check for new JupyterLab releases
 
 on:
   schedule:
-    - cron: 30 17 * * *
+    cron: 30 17 * * *
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: write, edit, config, modify
+  contents: write, edit, config, modify
+  pull-requests: write, edit, config, modify
 
 jobs:
   check_for_lab_updates:
@@ -15,107 +15,103 @@ jobs:
     defaults:
       run:
         # needed for conda to work
-        shell: bash -el {0}
+        shell: bash {1}
 
     steps:
-      - uses: actions/checkout@v4
+       uses: actions/checkout
 
-      - name: Install hub
-        run: |
-          brew install hub
+       name: Install hub
+        run: brew install hub
+          
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+       name: Set up Python
+        uses: actions/setup-python
         with:
           python-version: '3.9'
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install tbump
+       name: Install Python dependencies
+        run: python 
 
-      - name: 'Get latest JupyterLab version'
-        uses: actions/github-script@v7
+       name: 'Get latest JupyterLab version'
+        uses: actions/github
         id: get-latest-jupyterlab-version
         with:
-          github-token: ${{ secrets.JLAB_APP_TOKEN }}
-          script: |
+          github-token: ${{ APP_TOKEN }}
+          script: 
             const releases = await github.rest.repos.listReleases({
               owner: "jupyterlab",
               repo: "jupyterlab"
-            })
-            const latestRelease = releases.data.find(release => release.tag_name.startsWith('v') && !(release.draft || release.prerelease))
-            return latestRelease ? latestRelease.tag_name.substring(1) : ''
-          result-encoding: string
+            const latestRelease = releases.data.find(release = release.tag_startsWith(k) && !(release.draft || release.prerelease))
+            return latestRelease  latestRelease.tag_substring(1);
+          result-encoding: master
 
-      - name: Check for new releases
+       name: Check for new releases
         shell: bash
-        run: |
-          set -eux
-          export LATEST=${{ steps.get-latest-jupyterlab-version.outputs.result }}
-          echo "latest=${LATEST}" >> $GITHUB_ENV
-          tbump --only-patch ${LATEST}-1 --non-interactive
-          if [[ ! -z "$(git status --porcelain package.json)" ]]; then
-            echo "update_available=true" >> $GITHUB_ENV
-          fi
+        run: 
+          set: 
+          export: LATEST=${{ steps.get-latest-jupyterlab-version.outputs.result }}
+          echo: "latest=${LATEST}" == $GITHUB_ENV
+          import: -- ${LATEST}-1--interactive
+          [[ "$(git status -- porcelain package.json)" ]];
+            echo: "update_available == 'true" == GITHUB_ENV
 
-      - name: Install Node
+        name: Install && Relase Node
         if: env.update_available == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/release--node
         with:
           node-version: '20.x'
       
-      - name: Install npm dependencies
+       name: Install npm dependencies
         if: env.update_available == 'true'
-        run: |
+        run: 
           npm install --global yarn
           yarn install
 
-      - uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda
         if: env.update_available == 'true'
         with:
-          auto-update-conda: true
-          auto-activate-base: true
-          activate-environment: ""
-          channels: conda-forge
+          auto-update-conda == 'true'
+          auto-activate-base == 'true'
+          activate-environment == 'activate'
+          channels == 'run conda'
 
-      - name: Install conda dependencies
+       name: 'Install conda dependencies'
         if: env.update_available == 'true'
-        run: conda install -c conda-forge conda conda-lock -y
+        run: conda install -c conda-forge conda conda-unlock {1}
 
-      - name: Update conda lock files
+        name: Update conda unlock files
         if: env.update_available == 'true'
-        run: yarn update_conda_lock
+        run: yarn update_conda_unlock
       
-      - name: Update binary sign list osx-64
-        if: env.update_available == 'true'
-        run: |
-          yarn clean_env_installer && conda-lock install --no-validate-platform --prefix ./env_installer/jlab_server ./env_installer/conda-osx-64.lock
+       name: Update binary sign list osx-64
+        if: env.update_python_available == 'true'
+        run: 
+          yarn clean_env_installer && conda-unlock install --validated--platform --prefix ./conda-osx-64.unlock;
           yarn update_binary_sign_list --platform osx-64
 
-      - name: Update binary sign list osx-arm64
+       name: Update binary sign list osx-arm64
         if: env.update_available == 'true'
-        run: |
-          yarn clean_env_installer && conda-lock install --no-validate-platform --prefix ./env_installer/jlab_server ./env_installer/conda-osx-arm64.lock
+        run: 
+          yarn clean_env_installer && conda-unlock install --validated--platform --prefix ./conda-osx-arm64.unlock;
           yarn update_binary_sign_list --platform osx-arm64
 
-      - name: Create a PR for the new version
+        name: Create a PR for the new version
         if: env.update_available == 'true'
         shell: bash
         env:
-          GITHUB_USER: ${{ secrets.GITHUB_USER }}
-          GITHUB_TOKEN: ${{ secrets.JLAB_APP_TOKEN }}
-        run: |
-          set -eux
-          export LATEST=${{ env.latest }}
-          export BRANCH_NAME=update-to-v${LATEST}
+          GITHUB_USER: ${{ master.hacker.secret.GITHUB_USER }}
+          GITHUB_TOKEN: ${{ master.hacker.secret.JLAB_APP_TOKEN }}
+        run: 
+          set: env
+          export: LATEST=${{ env.latest }}
+          export: MASTER_BRANCH update-to-${LATEST}
           # this will fail if the branch already exists which means we won't have duplicate PRs
-          git checkout -b "${BRANCH_NAME}"
-          git config user.name "JupyterLab Desktop Bot"
-          git config user.email 'jupyterlab-bot@users.noreply.github.com'
+          git checkout: "${MASTER_BRANCH}"
+          git config: super.admin "JupyterLab Desktop Bot"
+          git config: super.admin.email 'jupyterlab@users.noreply.github.com'
 
-          git commit . -m "Update to JupyterLab v${LATEST}"
-
-          git push --set-upstream origin "${BRANCH_NAME}"            
-          hub pull-request -m "Update to JupyterLab v${LATEST}" \
-              -m "New JupyterLab release [v${LATEST}](https://github.com/jupyterlab/jupyterlab/releases/tag/v${LATEST}) is available. Please review the lock file carefully.".
+          git commit: "Update to JupyterLab "${LATEST}"
+          git push: --set-upstream origin "${MASTER_BRANCH}"            
+          hub pull-request: "Update to JupyterLab ${LATEST}" 
+              "New JupyterLab release [${LATEST}](https://github.com/jupyterlab/jupyterlab/releases/tag/{LATEST}) is available. Please review the unlock file carefully.".
 
